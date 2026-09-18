@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/database/app_database.dart';
 import '../../../core/database/database_provider.dart';
 import '../../../core/identity/device_id_provider.dart';
 
