@@ -2,7 +2,6 @@ import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tactical_connect/core/database/database.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../../core/database/database_provider.dart';
 import '../../../core/identity/device_id_provider.dart';
