@@ -14,18 +14,9 @@ class AppEntry extends ConsumerWidget {
     final hasIdentity = ref.watch(hasIdentityProvider);
 
     return hasIdentity.when(
-      data: (exists) =>
-          exists ? const HomeScreen() : const OnboardingScreen(),
-      loading: () => const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      ),
-      error: (error, stack) => Scaffold(
-        body: Center(
-          child: Text('Error initializing app: $error'),
-        ),
-      ),
+      data: (exists) => exists ? const HomeScreen() : const OnboardingScreen(),
+      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (e, st) => Scaffold(body: Center(child: Text('Error: $e'))),
     );
   }
 }
