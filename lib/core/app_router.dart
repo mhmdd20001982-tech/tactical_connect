@@ -11,11 +11,11 @@ class AppEntry extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final hasIdentityAsync = ref.watch(hasIdentityProvider);
+    final hasIdentity = ref.watch(hasIdentityProvider);
 
-    return hasIdentityAsync.when(
-      data: (hasIdentity) =>
-          hasIdentity ? const HomeScreen() : const OnboardingScreen(),
+    return hasIdentity.when(
+      data: (exists) =>
+          exists ? const HomeScreen() : const OnboardingScreen(),
       loading: () => const Scaffold(
         body: Center(
           child: CircularProgressIndicator(),
