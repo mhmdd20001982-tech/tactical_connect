@@ -10,16 +10,7 @@ class HomeScreen extends StatelessWidget {
         title: const Text('Tactical Connect'),
       ),
       body: const Center(
-        child: Text('Home — Map goes here'),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.chat_bubble), label: 'Chat'),
-          BottomNavigationBarItem(icon: Icon(Icons.group), label: 'Team'),
-          BottomNavigationBarItem(icon: Icon(Icons.place), label: 'Point'),
-          BottomNavigationBarItem(icon: Icon(Icons.sos), label: 'SOS'),
-        ],
+        child: Text('Welcome to Tactical Connect!'),
       ),
     );
   }
