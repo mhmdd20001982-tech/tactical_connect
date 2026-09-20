@@ -26,9 +26,7 @@ final GoRouter appRouter = GoRouter(
   routes: [
     GoRoute(
       path: '/',
-      builder: (BuildContext context, GoRouterState state) {
-        return const AppEntry();
-      },
+      builder: (context, state) => const AppEntry(),
     ),
   ],
 );
