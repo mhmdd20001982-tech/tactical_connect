@@ -17,28 +17,43 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _nameController = TextEditingController();
   bool _saving = false;
 
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
   Future<void> _continue() async {
     final name = _nameController.text.trim();
-    if (name.isEmpty) return;
+    if (name.isEmpty || _saving) return;
 
     setState(() => _saving = true);
 
-    final db = ref.read(appDatabaseProvider);
-    final deviceId = await DeviceIdProvider.getDeviceId();
-    final now = DateTime.now().millisecondsSinceEpoch;
+    try {
+      final db = ref.read(appDatabaseProvider);
+      final deviceId = await DeviceIdProvider.getDeviceId();
+      final now = DateTime.now().millisecondsSinceEpoch;
 
-    await db.into(db.users).insert(
-          UsersCompanion.insert(
-            deviceId: deviceId,
-            name: name,
-            isSelf: const Value(true),
-            lastSeen: now,
-            createdAt: now,
-          ),
-          mode: InsertMode.insertOrReplace,
-        );
+      await db.into(db.users).insert(
+            UsersCompanion.insert(
+              deviceId: deviceId,
+              name: name,
+              isSelf: const Value(true),
+              lastSeen: now,
+              createdAt: now,
+            ),
+            mode: InsertMode.insertOrReplace,
+          );
 
-    ref.invalidate(hasIdentityProvider);
+      // On success AppEntry swaps this screen for HomeScreen.
+      ref.invalidate(hasIdentityProvider);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not save your name: $e')),
+      );
+    }
   }
 
   @override
@@ -61,6 +76,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 controller: _nameController,
                 decoration: const InputDecoration(border: OutlineInputBorder()),
                 autofocus: true,
+                onSubmitted: (_) => _continue(),
               ),
               const SizedBox(height: 24),
               SizedBox(
