@@ -8,13 +8,9 @@ import '../transport/transport.dart';
 const Duration kHandshakeTimeout = Duration(seconds: 5);
 
 class HandshakeException implements Exception {
-  HandshakeException(this.message, {this.rejected = false});
+  HandshakeException(this.message);
 
   final String message;
-
-  /// True when the Host explicitly refused the Peer (for example a wrong
-  /// team code). Retrying with the same HELLO will not help.
-  final bool rejected;
 
   @override
   String toString() => 'HandshakeException: $message';
@@ -178,7 +174,7 @@ Future<PeerLink> acceptPeer(
         first.id,
         HelloReply.rejected(reason),
       );
-      throw HandshakeException('Peer rejected: $reason', rejected: true);
+      throw HandshakeException('Peer rejected: $reason');
     }
 
     await connection.send(
@@ -240,10 +236,7 @@ Future<PeerLink> connectToHost(
       throw HandshakeException('Invalid ACK: $e');
     }
     if (!result.accepted) {
-      throw HandshakeException(
-        'Rejected by host: ${result.reason}',
-        rejected: true,
-      );
+      throw HandshakeException('Rejected by host: ${result.reason}');
     }
 
     success = true;
