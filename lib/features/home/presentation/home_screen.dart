@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/database/database.dart';
-import '../../../../core/database/database_provider.dart';
-
-final selfUserStreamProvider = StreamProvider<User?>((ref) {
-  final db = ref.watch(appDatabaseProvider);
-  return (db.select(db.users)..where((tbl) => tbl.isSelf.equals(true)))
-      .watchSingleOrNull();
-});
+import '../../../core/identity/self_user_provider.dart';
+import '../../../core/network/session/peer_session.dart';
+import '../../team/application/session_controller.dart';
+import '../../team/presentation/team_tab.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -20,9 +16,42 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _currentIndex = 0;
 
+  String _statusText(SessionState s) {
+    switch (s.role) {
+      case SessionRole.none:
+        return 'Not in a team';
+      case SessionRole.host:
+        return 'Hosting "${s.teamName}" on port ${s.hostPort}';
+      case SessionRole.peer:
+        switch (s.peerState) {
+          case PeerState.connected:
+            return 'Connected to "${s.teamName}"';
+          case PeerState.reconnecting:
+            return 'Connection lost, reconnecting...';
+          default:
+            return 'Connecting...';
+        }
+    }
+  }
+
+  Color? _statusColor(SessionState s) {
+    switch (s.role) {
+      case SessionRole.none:
+        return null;
+      case SessionRole.host:
+        return Colors.green;
+      case SessionRole.peer:
+        return s.peerState == PeerState.connected
+            ? Colors.green
+            : Colors.orange;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final selfUserAsync = ref.watch(selfUserStreamProvider);
+    final session = ref.watch(sessionControllerProvider);
+    final subtitleColor = Theme.of(context).colorScheme.onSurfaceVariant;
 
     return Scaffold(
       appBar: AppBar(
@@ -36,13 +65,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             selfUserAsync.when(
               data: (user) => Text(
                 user != null ? 'Operator: ${user.name}' : 'Operator: Unknown',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white70,
-                    ),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: subtitleColor),
               ),
-              loading: () => const Text(
-                'Connecting...',
-                style: TextStyle(fontSize: 12, color: Colors.white70),
+              loading: () => Text(
+                'Loading...',
+                style: TextStyle(fontSize: 12, color: subtitleColor),
               ),
               error: (_, __) => const SizedBox.shrink(),
             ),
@@ -50,13 +80,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
         actions: [
           IconButton(
-            tooltip: 'Network Status',
-            icon: const Icon(Icons.wifi_tethering),
+            tooltip: 'Network status',
+            icon: Icon(Icons.wifi_tethering, color: _statusColor(session)),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Local mesh discovery active'),
-                  duration: Duration(seconds: 2),
+                SnackBar(
+                  content: Text(_statusText(session)),
+                  duration: const Duration(seconds: 2),
                 ),
               );
             },
@@ -67,7 +97,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         index: _currentIndex,
         children: const [
           _ChatsTab(),
-          _PeersTab(),
+          TeamTab(),
           _SettingsTab(),
         ],
       ),
@@ -81,9 +111,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             label: 'Chats',
           ),
           NavigationDestination(
-            icon: Icon(Icons.radar_outlined),
-            selectedIcon: Icon(Icons.radar),
-            label: 'Peers',
+            icon: Icon(Icons.groups_outlined),
+            selectedIcon: Icon(Icons.groups),
+            label: 'Team',
           ),
           NavigationDestination(
             icon: Icon(Icons.settings_outlined),
@@ -108,73 +138,16 @@ class _ChatsTab extends StatelessWidget {
           Icon(Icons.forum_outlined, size: 64, color: Colors.grey.shade400),
           const SizedBox(height: 16),
           const Text(
-            'No active sessions',
+            'No conversations yet',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 8),
           const Text(
-            'Connect to a peer to begin encrypted transmission.',
+            'Create or join a team from the Team tab.',
             style: TextStyle(color: Colors.grey),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _PeersTab extends StatelessWidget {
-  const _PeersTab();
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(12),
-      children: [
-        Card(
-          elevation: 0,
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          child: const ListTile(
-            leading: CircleAvatar(
-              backgroundColor: Colors.green,
-              child: Icon(Icons.wifi, color: Colors.white),
-            ),
-            title: Text('Local Subnet Broadcast'),
-            subtitle: Text('Listening on port 4242...'),
-            trailing: Text(
-              'ONLINE',
-              style: TextStyle(
-                color: Colors.green,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          child: Text(
-            'DISCOVERED PEERS (0)',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey,
-            ),
-          ),
-        ),
-        Center(
-          child: Padding(
-            padding: const EdgeInsets.only(top: 48),
-            child: Column(
-              children: [
-                Icon(Icons.sensors, size: 48, color: Colors.grey.shade400),
-                const SizedBox(height: 12),
-                const Text('Scanning for nearby tactical units...'),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
@@ -184,20 +157,25 @@ class _SettingsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final self = ref.watch(selfUserStreamProvider).value;
+
     return ListView(
       padding: const EdgeInsets.all(16),
-      children: const [
+      children: [
         ListTile(
-          leading: Icon(Icons.perm_identity),
-          title: Text('Device Protocol ID'),
-          subtitle: Text('Generated via local hardware entropy'),
+          leading: const Icon(Icons.perm_identity),
+          title: const Text('Device ID'),
+          subtitle: SelectableText(self?.deviceId ?? 'Not available'),
         ),
-        Divider(),
-        ListTile(
-          leading: Icon(Icons.security),
-          title: Text('End-to-End Encryption'),
-          subtitle: Text('Curve25519 + ChaCha20-Poly1305'),
-          trailing: Icon(Icons.check_circle, color: Colors.green),
+        const Divider(),
+        const ListTile(
+          leading: Icon(Icons.lock_open),
+          title: Text('Encryption'),
+          subtitle: Text(
+            'Not enabled yet. Traffic on the local network is not encrypted '
+            'in this version.',
+          ),
+          trailing: Icon(Icons.warning_amber, color: Colors.orange),
         ),
       ],
     );

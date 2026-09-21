@@ -84,6 +84,10 @@ class PeerSession {
   String? hostDeviceId;
   String? hostName;
 
+  /// Team identity announced by the Host in its ACK.
+  String? teamId;
+  String? teamName;
+
   /// Why the Host refused us. Set together with [PeerState.rejected].
   String? rejectionReason;
 
@@ -200,6 +204,8 @@ class PeerSession {
     _link = link;
     hostDeviceId = link.remoteDeviceId;
     hostName = link.remoteName;
+    teamId = link.remoteTeamId;
+    teamName = link.remoteTeamName;
 
     final ended = Completer<void>();
     link.messages.listen(

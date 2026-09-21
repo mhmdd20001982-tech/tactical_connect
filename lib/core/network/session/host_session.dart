@@ -53,6 +53,7 @@ class HostSession {
     required this.name,
     required this.teamName,
     required String teamCode,
+    this.teamId,
     this.tcpPort = kTransportPort,
     this.announce = true,
     this.discoveryPort = kDiscoveryPort,
@@ -67,6 +68,9 @@ class HostSession {
   final String deviceId;
   final String name;
   final String teamName;
+
+  /// Sent to Peers in the ACK so they can store the same team identity.
+  final String? teamId;
   final int tcpPort;
   final bool announce;
   final int discoveryPort;
@@ -135,6 +139,8 @@ class HostSession {
         localDeviceId: deviceId,
         localName: name,
         authorize: _authorize,
+        teamId: teamId,
+        teamName: teamName,
       );
       if (_stopped) {
         await link.connection.close();

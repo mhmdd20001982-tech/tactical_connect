@@ -44,11 +44,17 @@ class PeerLink {
     required this.remoteDeviceId,
     required this.remoteName,
     required this.messages,
+    this.remoteTeamId,
+    this.remoteTeamName,
   });
 
   final TransportConnection connection;
   final String remoteDeviceId;
   final String remoteName;
+
+  /// Team identity the Host sent in its ACK (Peer side only).
+  final String? remoteTeamId;
+  final String? remoteTeamName;
 
   /// Messages received after the handshake. Single-subscription and
   /// buffered until someone listens. Cancelling the subscription closes
@@ -132,6 +138,8 @@ Future<PeerLink> acceptPeer(
   required String localDeviceId,
   required String localName,
   required HelloAuthorizer authorize,
+  String? teamId,
+  String? teamName,
   Duration timeout = kHandshakeTimeout,
 }) async {
   final gate = _InboundGate(connection);
@@ -185,7 +193,11 @@ Future<PeerLink> acceptPeer(
       _replyMessage(
         localDeviceId,
         first.id,
-        HelloReply.accepted(name: localName),
+        HelloReply.accepted(
+          name: localName,
+          teamId: teamId,
+          teamName: teamName,
+        ),
       ),
     );
 
@@ -251,6 +263,8 @@ Future<PeerLink> connectToHost(
       connection: connection,
       remoteDeviceId: reply.senderId,
       remoteName: result.name ?? 'Host',
+      remoteTeamId: result.teamId,
+      remoteTeamName: result.teamName,
       messages: gate.rest,
     );
   } finally {
