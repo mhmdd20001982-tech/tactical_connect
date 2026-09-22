@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/identity/self_user_provider.dart';
 import '../../../core/network/session/peer_session.dart';
+import '../../chat/presentation/chats_screen.dart';
 import '../../team/application/session_controller.dart';
 import '../../team/presentation/team_tab.dart';
 
@@ -96,7 +97,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       body: IndexedStack(
         index: _currentIndex,
         children: const [
-          _ChatsTab(),
+          ChatsScreen(),
           TeamTab(),
           _SettingsTab(),
         ],
@@ -119,32 +120,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             icon: Icon(Icons.settings_outlined),
             selectedIcon: Icon(Icons.settings),
             label: 'Settings',
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ChatsTab extends StatelessWidget {
-  const _ChatsTab();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.forum_outlined, size: 64, color: Colors.grey.shade400),
-          const SizedBox(height: 16),
-          const Text(
-            'No conversations yet',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Create or join a team from the Team tab.',
-            style: TextStyle(color: Colors.grey),
           ),
         ],
       ),
